@@ -245,7 +245,6 @@ class OneShotDetectionModel(BaseModel):
             m.bias_init()  # only run once
         else:
             self.stride = torch.Tensor([32])  # default stride for i.e. RTDETR
-
         # Init weights, biases
         initialize_weights(self)
         if verbose:
@@ -303,7 +302,9 @@ class OneShotDetectionModel(BaseModel):
         if augment:
             return self._predict_augment(x)
         return self._predict_once(x, y, profile, visualize)
-
+    
+    #########################################################################################
+    #TODO here to fusionne the feature
     def _predict_once(self, x, y, profile=False, visualize=False):
         """
         Perform a forward pass through the network.
@@ -319,23 +320,24 @@ class OneShotDetectionModel(BaseModel):
         """
 
         # add backbone siames network
-        xz, yz, dtx, = [], [], [],  # outputs
+        xz, dtx, = [], []  # outputs
         for m in self.model:
 
             if m.f != -1:  # if not from previous layer
                 x = xz[m.f] if isinstance(m.f, int) else [x if j == -1 else xz[j] for j in m.f]  # from earlier layers
-                if m.i <=9:
-                    y = yz[m.f] if isinstance(m.f, int) else [y if j == -1 else yz[j] for j in m.f]  # from earlier layers
 
             if profile:
                 self._profile_one_layer(m, x, dtx)
 
-            x = m(x)  # run
-            if m.i <= 9:
-                y = m(y)
+            #TODO add task == oneshot
+            taks = 'oneshot'
+            if m.i <= 9 and taks == 'oneshot':
+                x,y = m(x,y)
+            else:
+                x = m(x)  # run
 
             #TODO support fusion here for the OneShotTask
-            if m.i == 4 or m.i == 6 or m.i == 9:
+            if (m.i == 4 or m.i == 6 or m.i == 9) and taks == 'oneshot':
                 upsample = torch.nn.functional.adaptive_avg_pool2d(y, (1,1))
                 x = x * upsample
 
@@ -344,6 +346,7 @@ class OneShotDetectionModel(BaseModel):
             if visualize:
                 feature_visualization(x, m.type, m.i, save_dir=visualize)
         return x
+    #########################################################################################
 
     def _predict_augment(self, x):
         """Perform augmentations on input image x and return augmented inference and train outputs."""
@@ -779,6 +782,17 @@ class mySequential(nn.Sequential):
                 inputs = module(inputs)
         return inputs
 
+class SiamesLayer(nn.Module):
+    def __init__(self, layer, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        # TODO SIAMES NETWORK HERE FOR THE BACKBONE
+        self.first = copy.deepcopy(layer)
+        self.second = copy.deepcopy(layer)
+        
+    def forward(self, x,y):
+        output = (self.first(x),self.second(y))
+        return output
+
 ###########################################################
 
 
@@ -808,7 +822,6 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
 
     ############################### à Simplifier dans une fontion #################################
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
-
 
     for i, (f, n, m, args) in enumerate(d['backbone']+d['head']):  # from, number, module, args
         m = getattr(torch.nn, m[3:]) if 'nn.' in m else globals()[m]  # get module
@@ -848,8 +861,24 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
         else:
             c2 = ch[f]
+            
+        ########################################################################
+        #TODO if backbone, alors dupliqué le layers
+        #TODO add condition oneshot task
+        task = 'oneshot'
+        if n > 1:
+            if i < len(d['backbone']) and task=='oneshot':
+                m_ =  mySequential(*(SiamesLayer(m(*args)) for _ in range(n)))
+            else:
+                m_ =  mySequential(*(m(*args) for _ in range(n)))
+        else:
+            if i < len(d['backbone']) and task=='oneshot':
+                m_ = SiamesLayer(m(*args))
+            else:
+                 m_ = m(*args)
+        ########################################################################
+        
 
-        m_ = mySequential(*(m(*args) for _ in range(n))) if n > 1 else m(*args)  # module
         t = str(m)[8:-2].replace('__main__.', '')  # module type
         m.np = sum(x.numel() for x in m_.parameters())  # number params
         m_.i, m_.f, m_.type = i, f, t  # attach index, 'from' index, type

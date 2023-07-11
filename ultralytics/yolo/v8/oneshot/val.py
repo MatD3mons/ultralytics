@@ -34,8 +34,11 @@ class DetectionValidator(BaseValidator):
         batch['img'] = batch['img'].to(self.device, non_blocking=True)
         batch['img'] = (batch['img'].half() if self.args.half else batch['img'].float()) / 255
 
+        ############################################################################
+        #TODO here
         batch['sup'] = batch['sup'].to(self.device, non_blocking=True)
-        batch['sup'] = (batch['sup'].half() if self.args.half else batch['img'].float()) / 255
+        batch['sup'] = (batch['sup'].half() if self.args.half else batch['sup'].float()) / 255
+        #################################################
 
         for k in ['batch_idx', 'cls', 'bboxes']:
             batch[k] = batch[k].to(self.device)
@@ -90,7 +93,10 @@ class DetectionValidator(BaseValidator):
                 if nl:
                     self.stats.append((correct_bboxes, *torch.zeros((2, 0), device=self.device), cls.squeeze(-1)))
                     if self.args.plots:
+                        ########################################################################
+                        #TODO change classe by the True classes
                         self.confusion_matrix.process_batch(detections=None, labels=cls.squeeze(-1))
+                        ########################################################################
                 continue
 
             # Predictions
@@ -111,7 +117,10 @@ class DetectionValidator(BaseValidator):
                 correct_bboxes = self._process_batch(predn, labelsn)
                 # TODO: maybe remove these `self.` arguments as they already are member variable
                 if self.args.plots:
+                    ########################################################################
+                    #TODO change classe by the True classes
                     self.confusion_matrix.process_batch(predn, labelsn)
+                    ########################################################################
             self.stats.append((correct_bboxes, pred[:, 4], pred[:, 5], cls.squeeze(-1)))  # (conf, pcls, tcls)
 
             # Save
@@ -234,13 +243,12 @@ class DetectionValidator(BaseValidator):
                     on_plot=self.on_plot)
 
     def plot_predictions(self, batch, preds, ni):
-
+        #TODO add support image here
         #######################################################
         Both_img = torch.cat((batch['img'], torch.nn.functional.interpolate(batch['sup'], size=batch['img'].size()[2:4])),2)
         batch_idx, cls, bboxes = output_to_target(preds, max_det=self.args.max_det)
-        bbox = bboxes
-        bbox[:,1] = bbox[:,1]/2
-        bbox[:,3] = bbox[:,3]/2
+        #bboxes[:,1] = bboxes[:,1]*2
+        #bboxes[:,3] = bboxes[:,3]*2
         #######################################################
 
         """Plots predicted bounding boxes on input images and saves the result."""
