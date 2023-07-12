@@ -108,10 +108,12 @@ class YOLO:
             self._new(model, task)
         else:
             self._load(model, task)
-
-    def __call__(self, source=None, stream=False, **kwargs):
+    #######################################################################################################
+    #TODO here
+    def __call__(self, source=None, support=None, stream=False, **kwargs):
         """Calls the 'predict' function with given arguments to perform object detection."""
-        return self.predict(source, stream=stream, **kwargs) # specifique stream=False,
+        return self.predict(source, support=support, stream=stream, **kwargs) # specifique stream=False,
+    #######################################################################################################
 
     def __getattr__(self, attr):
         """Raises error if object has no requested attribute."""
