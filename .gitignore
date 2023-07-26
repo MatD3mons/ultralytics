@@ -1,4 +1,12 @@
 RPC/
+COCO1/
+COCO2/
+COCO3/
+COCO4/
+supports/
+
+nohup.out
+
 *.mp4
 # Byte-compiled / optimized / DLL files
 __pycache__/
