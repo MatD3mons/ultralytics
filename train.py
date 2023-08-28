@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 
 # Load the model.
-model = YOLO('yolov8s.pt')
+model = YOLO('yolov8n.pt')
  
 # Training.
 results = model.train(
@@ -10,7 +10,7 @@ results = model.train(
    epochs=200,
    batch=90,
    task='oneshot',
-   name='yolov8n_COCO1',
+   name='yolov8n_COCO1__support7',
    val=True,
    device=[2,3,4]
    )
