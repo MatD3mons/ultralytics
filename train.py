@@ -10,7 +10,7 @@ results = model.train(
    epochs=200,
    batch=90,
    task='oneshot',
-   name='yolov8n_COCO1__support7',
+   name='yolov8n_COCO1__support0',
    val=True,
    device=[2,3,4]
    )

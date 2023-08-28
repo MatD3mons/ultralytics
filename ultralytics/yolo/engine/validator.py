@@ -96,7 +96,6 @@ class BaseValidator:
         """
         self.training = trainer is not None
         if self.training:
-            print("AAAAA")
             self.device = trainer.device
             self.data = trainer.data
             model = trainer.ema.ema or trainer.model
