@@ -8,9 +8,9 @@ results = model.train(
    data='COCO1/data.yaml',#data='COCO1/data.yaml
    imgsz=640,
    epochs=200,
-   batch=90,
+   batch=120,
    task='oneshot',
-   name='yolov8n_COCO1__support0',
+   name='yolov8n_COCO1_support2',
    val=True,
-   device=[2,3,4]
+   device=[5,6,7]
    )
