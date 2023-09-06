@@ -230,7 +230,7 @@ class OneShotDetectionModel(BaseModel):
         if nc and nc != self.yaml['nc']:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml['nc'] = nc  # override yaml value
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose, task='oneshot')  # model, savelist
         self.names = {i: f'{i}' for i in range(self.yaml['nc'])}  # default names dict
         self.inplace = self.yaml.get('inplace', True)
 
@@ -300,6 +300,7 @@ class OneShotDetectionModel(BaseModel):
             (torch.Tensor): The last output of the model.
         """
         if augment:
+            print("BUG")
             return self._predict_augment(x)
         return self._predict_once(x, y, profile, visualize)
     
@@ -401,7 +402,7 @@ class DetectionModel(BaseModel):
         if nc and nc != self.yaml['nc']:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml['nc'] = nc  # override yaml value
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose, task='OD')  # model, savelist
         self.names = {i: f'{i}' for i in range(self.yaml['nc'])}  # default names dict
         self.inplace = self.yaml.get('inplace', True)
 
@@ -545,7 +546,7 @@ class ClassificationModel(BaseModel):
             self.yaml['nc'] = nc  # override yaml value
         elif not nc and not self.yaml.get('nc', None):
             raise ValueError('nc not specified. Must specify nc in model.yaml or function arguments.')
-        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose)  # model, savelist
+        self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose, task='OD')  # model, savelist
         self.stride = torch.Tensor([1])  # no stride constraints
         self.names = {i: f'{i}' for i in range(self.yaml['nc'])}  # default names dict
         self.info()
@@ -796,7 +797,7 @@ class SiamesLayer(nn.Module):
 ###########################################################
 
 
-def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
+def parse_model(d, ch, verbose=True, task = 'oneshot'):  # model_dict, input_channels(3)
     # Parse a YOLO model.yaml dictionary into a PyTorch model
     import ast
 
@@ -864,8 +865,6 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             
         ########################################################################
         #TODO if backbone, alors dupliqué le layers
-        #TODO add condition oneshot task
-        task = 'oneshot'
         if n > 1:
             if i < len(d['backbone']) and task=='oneshot':
                 m_ =  mySequential(*(SiamesLayer(m(*args)) for _ in range(n)))

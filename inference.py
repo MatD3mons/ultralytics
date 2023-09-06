@@ -66,7 +66,7 @@ while cap.isOpened():
     if success:
         #frame = cv2.resize(frame, (640,640))
         frame = resizeAndPad(frame,(640,640))
-        support = cv2.resize(support, (640,640))
+        support = cv2.resize(support, (160,160))
         #support = resizeAndPad(support,(640,640))
         #support = cv2.cvtColor(support, cv2.COLOR_BGR2RGB)
         # Run YOLOv8 inference on the frame

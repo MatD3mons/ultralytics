@@ -233,7 +233,7 @@ class BasePredictor:
         if not self.done_warmup:
             ##############################################################################
             if support is not None: #TODO add the test for support ^^
-                self.model.warmup(imgsz=(1 if self.model.pt or self.model.triton else self.dataset.bs, 3, *self.imgsz), supsz=(1,3,640,640))
+                self.model.warmup(imgsz=(1 if self.model.pt or self.model.triton else self.dataset.bs, 3, *self.imgsz), supsz=(1,3,160,160))
             else:
                 self.model.warmup(imgsz=(1 if self.model.pt or self.model.triton else self.dataset.bs, 3, *self.imgsz))
             ##############################################################################

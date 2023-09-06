@@ -1,5 +1,4 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
-
 import os
 from pathlib import Path
 
@@ -226,10 +225,10 @@ class DetectionValidator(BaseValidator):
     def plot_val_samples(self, batch, ni):
         #TODO add support image here
         #######################################################
-        Both_img = torch.cat((batch['img'], torch.nn.functional.interpolate(batch['sup'], size=batch['img'].size()[2:4])),2)
+        Both_img = torch.clone(batch['img'])
+        w,h = (batch['sup']).size()[2:]
+        Both_img[:,:,:w,:h] = batch['sup']
         bbox = batch['bboxes']
-        bbox[:,1] = bbox[:,1]/2
-        bbox[:,3] = bbox[:,3]/2
         #######################################################
 
         """Plot validation image samples."""
@@ -245,10 +244,10 @@ class DetectionValidator(BaseValidator):
     def plot_predictions(self, batch, preds, ni):
         #TODO add support image here
         #######################################################
-        Both_img = torch.cat((batch['img'], torch.nn.functional.interpolate(batch['sup'], size=batch['img'].size()[2:4])),2)
+        Both_img = torch.clone(batch['img'])
+        w,h = (batch['sup']).size()[2:]
+        Both_img[:,:,:w,:h] = batch['sup']
         batch_idx, cls, bboxes = output_to_target(preds, max_det=self.args.max_det)
-        #bboxes[:,1] = bboxes[:,1]*2
-        #bboxes[:,3] = bboxes[:,3]*2
         #######################################################
 
         """Plots predicted bounding boxes on input images and saves the result."""

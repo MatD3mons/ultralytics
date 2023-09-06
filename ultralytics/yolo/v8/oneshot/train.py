@@ -115,10 +115,10 @@ class DetectionTrainer(BaseTrainer):
         """Plots training samples with their annotations."""
         #TODO add support image here
         #######################################################
-        Both_img = torch.cat((batch['img'],batch['sup']),2)
+        Both_img = torch.clone(batch['img'])
+        w,h = (batch['sup']).size()[2:]
+        Both_img[:,:,:w,:h] = batch['sup']
         bbox = batch['bboxes']
-        bbox[:,1] = bbox[:,1]/2
-        bbox[:,3] = bbox[:,3]/2
         #######################################################
 
         plot_images(images=Both_img,

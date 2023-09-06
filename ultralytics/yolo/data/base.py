@@ -260,12 +260,13 @@ class BaseDataset(Dataset):
         #TODO ADD SUPPORT IMAGE HERE
         c = str(int(label['im_file'].split('.')[1]))
         sup = cv2.imread(self.sup_path+'/'+c+'.png') # The classes are define between 1 and 200 for RPC
-        h0, w0 = sup.shape[:2]  # orig hw
-        r = self.imgsz / max(h0, w0)  # ratio
-        if r != 1:  # if sizes are not equal
-            interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
-            sup = cv2.resize(sup, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
-                                interpolation=interp)
+        #h0, w0 = sup.shape[:2]  # orig hw
+        #TODO size of SUPPORT HERE
+        #r = (80,80) / max(h0, w0)  # ratio
+        #if r != 1:  # if sizes are not equal
+        #    interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
+        #    sup = cv2.resize(sup, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
+        #                        interpolation=interp)
         label['sup'] = sup
 
         ########################################
