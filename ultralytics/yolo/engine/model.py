@@ -17,17 +17,9 @@ from ultralytics.yolo.utils.torch_utils import smart_inference_mode
 
 # Map head to model, trainer, validator, and predictor classes
 TASK_MAP = {
-    'classify': [
-        ClassificationModel, yolo.v8.classify.ClassificationTrainer, yolo.v8.classify.ClassificationValidator,
-        yolo.v8.classify.ClassificationPredictor],
     'detect': [
         DetectionModel, yolo.v8.detect.DetectionTrainer, yolo.v8.detect.DetectionValidator,
         yolo.v8.detect.DetectionPredictor],
-    'segment': [
-        SegmentationModel, yolo.v8.segment.SegmentationTrainer, yolo.v8.segment.SegmentationValidator,
-        yolo.v8.segment.SegmentationPredictor],
-    'pose': [PoseModel, yolo.v8.pose.PoseTrainer, yolo.v8.pose.PoseValidator, 
-             yolo.v8.pose.PosePredictor],
     'oneshot': [
         OneShotDetectionModel, yolo.v8.oneshot.DetectionTrainer, yolo.v8.oneshot.DetectionValidator,
         yolo.v8.oneshot.DetectionPredictor]}

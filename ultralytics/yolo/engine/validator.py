@@ -148,7 +148,7 @@ class BaseValidator:
             ##########################################################################
             #TODO add here for oneshot 
             if self.args.task == 'oneshot':
-                model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz),supsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
+                model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz),supsz=(1 if pt else self.args.batch, 3, int(imgsz/4), int(imgsz/4)))  # warmup
             else:
                 model.warmup(imgsz=(1 if pt else self.args.batch, 3, imgsz, imgsz))  # warmup
 
@@ -164,9 +164,16 @@ class BaseValidator:
         for batch_i, batch in enumerate(bar):
             self.run_callbacks('on_val_batch_start')
             self.batch_i = batch_i
+
             # Preprocess
             with dt[0]:
                 batch = self.preprocess(batch)
+
+            ###########################################
+            if self.args.task == 'oneshot':
+                cls = torch.clone(batch['cls'])
+                batch['cls'][:] = 0
+            ###########################################
 
             # Inference
             with dt[1]:
@@ -185,6 +192,14 @@ class BaseValidator:
             # Postprocess
             with dt[3]:
                 preds = self.postprocess(preds)
+
+            ###########################################
+            batch['cls'] = cls
+            for si, pred in enumerate(preds):
+                idx = batch['batch_idx'] == si
+                cls = batch['cls'][idx]
+                pred[:,5] = cls[0]
+            ###########################################
 
             self.update_metrics(preds, batch)
             if self.args.plots and batch_i < 3:

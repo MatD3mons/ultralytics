@@ -112,7 +112,7 @@ class BasePredictor:
         name = self.args.name or f'{self.args.mode}'
         return increment_path(Path(project) / name, exist_ok=self.args.exist_ok)
 
-    def preprocess(self, im):
+    def preprocess(self, im, imgsz):
         """Prepares input image before inference.
 
         Args:
@@ -120,18 +120,17 @@ class BasePredictor:
         """
         not_tensor = not isinstance(im, torch.Tensor)
         if not_tensor:
-            im = np.stack(self.pre_transform(im))
+            im = np.stack(self.pre_transform(im, imgsz))
             im = im[..., ::-1].transpose((0, 3, 1, 2))  # BGR to RGB, BHWC to BCHW, (n, 3, h, w)
             im = np.ascontiguousarray(im)  # contiguous
             im = torch.from_numpy(im)
-
         img = im.to(self.device)
         img = img.half() if self.model.fp16 else img.float()  # uint8 to fp16/32
         if not_tensor:
             img /= 255  # 0 - 255 to 0.0 - 1.0
         return img
 
-    def pre_transform(self, im):
+    def pre_transform(self, im, imgsz):
         """Pre-transform input image before inference.
 
         Args:
@@ -141,7 +140,7 @@ class BasePredictor:
         """
         same_shapes = all(x.shape == im[0].shape for x in im)
         auto = same_shapes and self.model.pt
-        return [LetterBox(self.imgsz, auto=auto, stride=self.model.stride)(image=x) for x in im]
+        return [LetterBox(imgsz, auto=auto, stride=self.model.stride)(image=x) for x in im]
 
     def write_results(self, idx, results, batch):
         """Write inference results to a file or directory."""
@@ -258,13 +257,13 @@ class BasePredictor:
             ##################################################################
             visualize = increment_path(self.save_dir / Path(path[0]).stem,
                                        mkdir=True) if self.args.visualize and (not self.source_type.tensor) else False
-
+            
             # Preprocess
             with profilers[0]:
-                im = self.preprocess(im0s)
+                im = self.preprocess(im0s, self.imgsz)
                 ##############################################################################
                 if(len(batch) == 5):
-                    sup = self.preprocess(sup0s) #TODO add preprocess at the support image
+                    sup = self.preprocess(sup0s, (160,160,3)) #TODO add preprocess at the support image
                 ##############################################################################
 
             # Inference TODO add oneshot case
@@ -278,12 +277,7 @@ class BasePredictor:
 
             # Postprocess
             with profilers[2]:
-                ##############################################################################
-                if len(batch) == 5:
-                    self.results = self.postprocess(preds, im, sup, im0s) #TODO add support tensor.
-                else:
                     self.results = self.postprocess(preds, im, im0s)
-                ##############################################################################
             self.run_callbacks('on_predict_postprocess_end')
 
             # Visualize, save, write results

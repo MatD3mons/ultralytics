@@ -79,7 +79,9 @@ class DetectionTrainer(BaseTrainer):
 
     def get_model(self, cfg=None, weights=None, verbose=True):
         """Return a YOLO detection model."""
-        model = OneShotDetectionModel(cfg, nc=self.data['nc'], verbose=verbose and RANK == -1)
+        ###########################################################################################
+        model = OneShotDetectionModel(cfg, nc=1, verbose=verbose and RANK == -1) #TODO nc always = 1
+        ###########################################################################################
         if weights:
             model.load(weights)
         return model

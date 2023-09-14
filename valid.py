@@ -7,7 +7,6 @@ print(model.info())
 # Validate the model
 metrics = model.val( data='RPC/data.yaml',
    imgsz=640,
-   epochs=100,
    batch=8,
    task='oneshot',
    name='yolov8n_RPC_valid',)  # no arguments needed, dataset and settings remembered

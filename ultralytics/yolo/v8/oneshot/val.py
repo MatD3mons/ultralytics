@@ -92,10 +92,7 @@ class DetectionValidator(BaseValidator):
                 if nl:
                     self.stats.append((correct_bboxes, *torch.zeros((2, 0), device=self.device), cls.squeeze(-1)))
                     if self.args.plots:
-                        ########################################################################
-                        #TODO change classe by the True classes
                         self.confusion_matrix.process_batch(detections=None, labels=cls.squeeze(-1))
-                        ########################################################################
                 continue
 
             # Predictions

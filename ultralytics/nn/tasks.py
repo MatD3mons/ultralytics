@@ -14,7 +14,7 @@ from ultralytics.nn.modules import (AIFI, C1, C2, C3, C3TR, SPP, SPPF, Bottlenec
                                     RTDETRDecoder, Segment)
 from ultralytics.yolo.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.yolo.utils.checks import check_requirements, check_suffix, check_yaml
-from ultralytics.yolo.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8PoseLoss, v8SegmentationLoss
+from ultralytics.yolo.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8PoseLoss, v8SegmentationLoss, v8OneShotDetectionLoss
 from ultralytics.yolo.utils.plotting import feature_visualization
 from ultralytics.yolo.utils.torch_utils import (fuse_conv_and_bn, fuse_deconv_and_bn, initialize_weights,
                                                 intersect_dicts, make_divisible, model_info, scale_img, time_sync)
@@ -230,7 +230,9 @@ class OneShotDetectionModel(BaseModel):
         if nc and nc != self.yaml['nc']:
             LOGGER.info(f"Overriding model.yaml nc={self.yaml['nc']} with nc={nc}")
             self.yaml['nc'] = nc  # override yaml value
+        print("====")
         self.model, self.save = parse_model(deepcopy(self.yaml), ch=ch, verbose=verbose, task='oneshot')  # model, savelist
+        print("====")
         self.names = {i: f'{i}' for i in range(self.yaml['nc'])}  # default names dict
         self.inplace = self.yaml.get('inplace', True)
 
@@ -239,8 +241,11 @@ class OneShotDetectionModel(BaseModel):
         if isinstance(m, (Detect, Segment, Pose)):
             s = 256  # 2x min stride
             m.inplace = self.inplace
+            #############################################################################################################################
             forward = lambda x,y: self.forward(x,y)[0] if isinstance(m, (Segment, Pose)) else self.forward(x,y)
-            m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s),torch.zeros(1, ch, s, s))])  # forward
+            #############################################################################################################################
+            m.stride = torch.tensor([s / x.shape[-2] for x in forward(torch.zeros(1, ch, s, s),torch.zeros(1, ch, int(s/4), int(s/4)))])  # forward
+            #############################################################################################################################
             self.stride = m.stride
             m.bias_init()  # only run once
         else:
@@ -387,7 +392,7 @@ class OneShotDetectionModel(BaseModel):
         return y
 
     def init_criterion(self):
-        return v8DetectionLoss(self)
+        return v8OneShotDetectionLoss(self)
 #######################################
 
 class DetectionModel(BaseModel):
@@ -876,7 +881,7 @@ def parse_model(d, ch, verbose=True, task = 'oneshot'):  # model_dict, input_cha
             else:
                  m_ = m(*args)
         ########################################################################
-        
+        #TODO add the true modules of t name
 
         t = str(m)[8:-2].replace('__main__.', '')  # module type
         m.np = sum(x.numel() for x in m_.parameters())  # number params

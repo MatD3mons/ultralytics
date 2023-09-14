@@ -9,7 +9,7 @@ from ultralytics.yolo.utils import DEFAULT_CFG, ROOT, ops
 ###########################################
 class DetectionPredictor(BasePredictor):
 
-    def postprocess(self, preds, img, support, orig_imgs):
+    def postprocess(self, preds, img, orig_imgs):
         """Postprocesses predictions and returns a list of Results objects."""
         preds = ops.non_max_suppression(preds,
                                         self.args.conf,

@@ -255,6 +255,9 @@ class Mosaic(BaseMixTransform):
         for labels in mosaic_labels:
             cls.append(labels['cls'])
             instances.append(labels['instances'])
+        print(1)
+        print("bug")
+        print(mosaic_labels[0]['sup'])
         final_labels = {
             'im_file': mosaic_labels[0]['im_file'],
             ####################################################
@@ -717,8 +720,8 @@ class Format:
         h, w = img.shape[:2]
         cls = labels.pop('cls')
         ######################
-        #TODO add supp before
-        sup = labels.pop('sup')
+        if 'sup' in labels:
+            sup = labels.pop('sup')
         ######################
 
         instances = labels.pop('instances')
@@ -740,8 +743,8 @@ class Format:
         labels['img'] = self._format_img(img)
         
         #########################################################
-        #TODO add here
-        labels['sup'] = self._format_img(sup)      
+        if sup is not None:
+            labels['sup'] = self._format_sup(sup)    
         #########################################################
         
         labels['cls'] = torch.from_numpy(cls) if nl else torch.zeros(nl)
@@ -752,6 +755,12 @@ class Format:
         if self.batch_idx:
             labels['batch_idx'] = torch.zeros(nl)
         return labels
+
+    def _format_sup(self, sup):
+        """Format the image for YOLOv5 from Numpy array to PyTorch tensor."""
+        sup = np.ascontiguousarray(sup.transpose(2, 0, 1)[::-1])
+        sup = torch.from_numpy(sup)
+        return sup
 
     def _format_img(self, img):
         """Format the image for YOLOv5 from Numpy array to PyTorch tensor."""

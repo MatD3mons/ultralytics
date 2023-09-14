@@ -354,10 +354,18 @@ class BaseTrainer:
                     batch = self.preprocess_batch(batch)
                     
                     ########################################################
+                    if self.args.task== 'oneshot':
+                        cls = torch.clone(batch['cls'])
+                        batch['cls'][:] = 0 # Oneshot All classe in 0
+                    ########################################################
 
                     self.loss, self.loss_items = self.model(batch)
 
                     ########################################################
+                    if self.args.task == 'oneshot':
+                        batch['cls'] = cls
+                    ########################################################
+                    
                     if RANK != -1:
                         self.loss *= world_size
                     self.tloss = (self.tloss * i + self.loss_items) / (i + 1) if self.tloss is not None \

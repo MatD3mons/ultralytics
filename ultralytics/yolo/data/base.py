@@ -71,13 +71,9 @@ class BaseDataset(Dataset):
         self.prefix = prefix
         self.fraction = fraction
 
-        #############################################################################       
         self.im_files = self.get_img_files(self.img_path) # return list path of images
 
         self.labels = self.get_labels()
-
-        #self.supports = self.get_img_files(self.sup_path) # sert a rien
-        #############################################################################
 
         self.update_labels(include_class=classes)  # single_cls and include_class
         self.ni = len(self.labels)  # number of images
@@ -178,6 +174,12 @@ class BaseDataset(Dataset):
 
         return self.ims[i], self.im_hw0[i], self.im_hw[i]
 
+    def load_sup(self, label):
+        """Loads 1 support images from dataset label 'label', returns (sup)."""
+        c = str(int(label[0]))
+        sup = cv2.imread(self.sup_path+'/'+c+'.png') # The classes are define between 1 and 200 for RPC
+        return sup
+
     def cache_images(self, cache):
         """Cache images to memory or disk."""
         b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
@@ -253,23 +255,11 @@ class BaseDataset(Dataset):
         label = deepcopy(self.labels[index])  # requires deepcopy() https://github.com/ultralytics/ultralytics/pull/1948
         label.pop('shape', None)  # shape is for rect, remove it
         label['img'], label['ori_shape'], label['resized_shape'] = self.load_image(index)
+        ########################################
+        label['sup'] = self.load_sup(label['cls'])
+        ########################################
         label['ratio_pad'] = (label['resized_shape'][0] / label['ori_shape'][0],
                               label['resized_shape'][1] / label['ori_shape'][1])  # for evaluation
-        
-        ########################################
-        #TODO ADD SUPPORT IMAGE HERE
-        c = str(int(label['im_file'].split('.')[1]))
-        sup = cv2.imread(self.sup_path+'/'+c+'.png') # The classes are define between 1 and 200 for RPC
-        #h0, w0 = sup.shape[:2]  # orig hw
-        #TODO size of SUPPORT HERE
-        #r = (80,80) / max(h0, w0)  # ratio
-        #if r != 1:  # if sizes are not equal
-        #    interp = cv2.INTER_LINEAR if (self.augment or r > 1) else cv2.INTER_AREA
-        #    sup = cv2.resize(sup, (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz)),
-        #                        interpolation=interp)
-        label['sup'] = sup
-
-        ########################################
 
         if self.rect:
             label['rect_shape'] = self.batch_shapes[self.batch[index]]
